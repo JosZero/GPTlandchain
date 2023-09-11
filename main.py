@@ -1,45 +1,12 @@
-import re
-from typing import List
+
 
 import streamlit as st
 
 from tweety import Twitter
-from tweety.types import Tweet
-import pandas as pd
-from datetime import datetime
+
 import os
 
-def clean_tweet(text: str) -> str:
-    text = re.sub(r"http\S+", "", text)
-    text = re.sub(r"www.\S+", "", text)
-    return re.sub(r"\s+", " ", text)
-
-def create_dataframe_from_tweets(tweets: List[Tweet]) -> pd.DataFrame:
-    rows = []
-    for tweet in tweets:
-        clean_text = clean_tweet(tweet.text)
-        if len(clean_text) == 0:
-            continue
-        rows.append(
-            {
-                "id": tweet.id,
-                "text": clean_text,
-                "author": tweet.author.username,
-                "date": str(tweet.date.date()),
-                "created_at": tweet.date,
-                "views": tweet.views,
-            }
-        )
-    
-    df = pd.DataFrame(
-        rows, columns=["id", "text", "author", "date", "views", "created_at"]
-    )
-    df.set_index("id", inplace=True)
-    if df.empty:
-        return df
-    df = df[df.created_at.dt.date > datetime.now().date() - pd.to_timedelta("700day")]
-    return df.sort_values(by="created_at", ascending=False)
-
+from sentiment_analyzer import create_dataframe_from_tweets ,analyze_sentiment, create_tweet_list_for_prompt
 
   
 def on_add_author():
@@ -54,6 +21,10 @@ def on_add_author():
         return 
     st.session_state.twitter_handles[twitter_handle] = all_tweets[0].author.name
     st.session_state.tweets.extend(all_tweets)
+    st.markdown(create_tweet_list_for_prompt(st.session_state.tweets, twitter_handle))
+    st.session_state.author_sentiment[twitter_handle] = analyze_sentiment(
+        twitter_handle, st.session_state.tweets
+    )
 
 
 twitter_client = Twitter("session")
@@ -69,6 +40,7 @@ if not "tweets" in st.session_state:
     st.session_state.tweets = []
     st.session_state.api_key = ""
     st.session_state.twitter_handles = {}
+    st.session_state.author_sentiment = {}
 
 os.environ["OPENAI_API_KEY"] = st.session_state.api_key
 
@@ -96,5 +68,8 @@ with col1:
                 st.markdown(f"{name} ([{handle}](https://twitter.com/{handle}))")
         
         st.subheader("Tweets", anchor=False)
-        st.dataframe(create_dataframe_from_tweets(st.session_state.tweets))
+        st.dataframe(
+            create_dataframe_from_tweets(st.session_state.tweets), use_container_width=True
+        )
+        st.markdown(st.session_state.author_sentiment)
 
