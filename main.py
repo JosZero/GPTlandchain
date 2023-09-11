@@ -6,9 +6,9 @@ from tweety import Twitter
 
 import os
 
-from sentiment_analyzer import create_dataframe_from_tweets ,analyze_sentiment, create_tweet_list_for_prompt
+from sentiment_analyzer import create_dataframe_from_tweets, analyze_sentiment, create_tweet_list_for_prompt
 
-  
+
 def on_add_author():
     twitter_handle = st.session_state.twitter_handle
     if twitter_handle.startswith("@"):
@@ -18,13 +18,11 @@ def on_add_author():
 
     all_tweets = twitter_client.get_tweets(twitter_handle)
     if len(all_tweets) == 0:
-        return 
+        return
     st.session_state.twitter_handles[twitter_handle] = all_tweets[0].author.name
     st.session_state.tweets.extend(all_tweets)
-    st.markdown(create_tweet_list_for_prompt(st.session_state.tweets, twitter_handle))
-    st.session_state.author_sentiment[twitter_handle] = analyze_sentiment(
-        twitter_handle, st.session_state.tweets
-    )
+    #st.write(create_tweet_list_for_prompt(st.session_state.tweets, twitter_handle))
+    #st.session_state.author_sentiment[twitter_handle] = analyze_sentiment(twitter_handle, st.session_state.tweets)
 
 
 twitter_client = Twitter("session")
@@ -50,12 +48,12 @@ print(st.session_state.api_key)
 col1, col2 = st.columns(2)
 
 with col1:
-    st.text_input("OpenAI API key", 
-                  type="password", 
-                  key="api_key", 
+    st.text_input("OpenAI API key",
+                  type="password",
+                  key="api_key",
                   placeholder="sk-...4224",
                   help="Get your API key: https://platform.openai.com/account/api-keys")
-    
+
     with st.form(key="twitter_handle_form", clear_on_submit=True):
         st.subheader("Add Twitter Account")
         st.text_input("Twitter Handler", key="twitter_handle", placeholder="@saylor")
@@ -66,10 +64,9 @@ with col1:
             for handle, name in st.session_state.twitter_handles.items():
                 handle = "@"+handle
                 st.markdown(f"{name} ([{handle}](https://twitter.com/{handle}))")
-        
+
         st.subheader("Tweets", anchor=False)
         st.dataframe(
-            create_dataframe_from_tweets(st.session_state.tweets), use_container_width=True
+            create_dataframe_from_tweets(st.session_state.tweets)
         )
         st.markdown(st.session_state.author_sentiment)
-

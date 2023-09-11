@@ -55,7 +55,7 @@ def create_dataframe_from_tweets(tweets: List[Tweet]) -> pd.DataFrame:
     df.set_index("id", inplace=True)
     if df.empty:
         return df
-    df = df[df.created_at.dt.date > datetime.now().date() - pd.to_timedelta("10day")]
+    df = df[df.created_at.dt.date > datetime.now().date() - pd.to_timedelta("15day")]
     return df.sort_values(by="created_at", ascending=False)
 
 
@@ -90,3 +90,16 @@ def analyze_sentiment(twitter_handle: str, tweets: List[Tweet]) -> Dict[str, int
         }
     )
     return json.loads(response["text"])
+
+
+
+
+
+
+
+
+
+
+
+#APIKEY
+#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
