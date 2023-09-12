@@ -9,8 +9,23 @@ from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
-
 PROMPT_TEMPLATE = """
+Eres un analista de noticias con experiencia en la evaluación del sentimiento de noticias de diferentes fuentes. Siempre sigues las tendencias en noticias y comprendes profundamente los acontecimientos actuales.
+
+Se te proporcionan titulares de noticias y sus resúmenes para fechas específicas:
+
+{news}
+
+Indica cuán positivas o negativas son las noticias para cada fecha. Utiliza números en una escala de 0 a 100, donde 0 indica una perspectiva extremadamente negativa y 100 indica una perspectiva extremadamente positiva.
+Utiliza un JSON con el siguiente formato:
+
+"date": "sentiment"
+
+Cada entrada del JSON debe reflejar el sentimiento agregado para esa fecha. Proporciona solo el JSON, sin explicaciones adicionales.
+"""
+
+
+PROMPT_TEMPLATE2 = """
 You're a cryptocurrency trader with 10+ years of experience. You always follow the trend
 and follow and deeply understand crypto experts on Twitter. You always consider the historical predictions for each expert on Twitter.
 
@@ -55,7 +70,7 @@ def create_dataframe_from_tweets(tweets: List[Tweet]) -> pd.DataFrame:
     df.set_index("id", inplace=True)
     if df.empty:
         return df
-    df = df[df.created_at.dt.date > datetime.now().date() - pd.to_timedelta("15day")]
+    df = df[df.created_at.dt.date > datetime.now().date() - pd.to_timedelta("100day")]
     return df.sort_values(by="created_at", ascending=False)
 
 
@@ -64,8 +79,8 @@ def create_tweet_list_for_prompt(tweets: List[Tweet], twitter_handle: str) -> st
     user_tweets = df[df.author == twitter_handle]
     if user_tweets.empty:
         return ""
-    if len(user_tweets) > 100:
-        user_tweets = user_tweets.sample(n=100)
+    if len(user_tweets) > 200:
+        user_tweets = user_tweets.sample(n=200)
 
     text = ""
 
@@ -73,6 +88,7 @@ def create_tweet_list_for_prompt(tweets: List[Tweet], twitter_handle: str) -> st
         text += f"{tweets_date}:"
         for tweet in tweets.itertuples():
             text += f"\n{tweet.views} - {tweet.text}"
+            
     return text
 
 
